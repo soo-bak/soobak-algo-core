@@ -37,14 +37,10 @@ jobs:
           fetch-depth: 0
 
       - name: Guard license secret
-        if: ${{ env.TEST_PLATFORM == 'EditMode' }}
-        shell: bash
+        if: ${{ secrets.UNITY_LICENSE == '' }}
         run: |
-          set -euo pipefail
-          if [ -z "${UNITY_LICENSE:-}" ]; then
-            echo "::error::UNITY_LICENSE secret is required for EditMode automation." >&2
-            exit 1
-          fi
+          echo "::error::UNITY_LICENSE secret is required for EditMode automation." >&2
+          exit 1
 
       - name: Cache Library
         uses: actions/cache@v4
