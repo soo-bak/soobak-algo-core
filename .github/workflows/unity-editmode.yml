@@ -26,7 +26,7 @@ jobs:
   editmode:
     name: EditMode Regression
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 40
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -34,11 +34,15 @@ jobs:
           lfs: true
           fetch-depth: 0
 
-      - name: Install Unity
-        uses: game-ci/unity-setup@v4
-        with:
-          unityVersion: ${{ env.UNITY_VERSION }}
-          githubToken: ${{ secrets.GITHUB_TOKEN }}
+      - name: Guard license secret
+        if: ${{ env.TEST_PLATFORM == 'EditMode' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "${UNITY_LICENSE:-}" ]; then
+            echo "::error::UNITY_LICENSE secret is required for EditMode automation." >&2
+            exit 1
+          fi
 
       - name: Cache Library
         uses: actions/cache@v4

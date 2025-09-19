@@ -23,19 +23,42 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Ensure commits are signed
-        uses: zgosalvez/github-actions-ensure-commit-signed@v1
-        with:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Trust soo-bak signing key
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.ssh
+          cat <<'EOF' > ~/.ssh/allowed_signers
+soo-bak@github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDwMav68GMpY0c5ZkVv859NppHgfzMfrCYyQuByZwNtq
+EOF
+          git config --global gpg.format ssh
+          git config --global gpg.ssh.allowedSignersFile ~/.ssh/allowed_signers
+
+      - name: Enforce signed commits
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            range="${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}"
+          elif [ -n "${{ github.event.before }}" ] && [ "${{ github.event.before }}" != "0000000000000000000000000000000000000000" ]; then
+            range="${{ github.event.before }}..${{ github.sha }}"
+          else
+            range="${{ github.sha }}"
+          fi
+
+          while read -r commit; do
+            if ! git verify-commit "$commit" >/dev/null 2>&1; then
+              echo "::error::Commit $commit lacks a trusted signature" >&2
+              exit 1
+            fi
+          done < <(git rev-list "$range")
 
       - name: Lint commit titles
         shell: pwsh
         run: |
           $eventName = '${{ github.event_name }}'
           if ($eventName -eq 'pull_request') {
-            $base = '${{ github.event.pull_request.base.sha }}'
-            $head = '${{ github.event.pull_request.head.sha }}'
-            $range = "$base..$head"
+            $range = '${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}'
           } else {
             $before = '${{ github.event.before }}'
             $after = '${{ github.sha }}'
