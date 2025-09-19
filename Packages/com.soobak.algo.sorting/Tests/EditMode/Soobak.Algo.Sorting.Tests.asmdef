@@ -1,7 +1,8 @@
 ﻿{
-  "name": "Soobak.Algo.Core.Tests",
-  "rootNamespace": "Soobak.Algo.Core.Tests",
+  "name": "Soobak.Algo.Sorting.Tests",
+  "rootNamespace": "Soobak.Algo.Sorting.Tests",
   "references": [
+    "Soobak.Algo.Sorting",
     "Soobak.Algo.Core",
     "UniTask"
   ],

@@ -1,7 +1,8 @@
 ﻿{
-  "name": "Soobak.Algo.Core",
-  "rootNamespace": "Soobak.Algo.Core",
+  "name": "Soobak.Algo.Sorting",
+  "rootNamespace": "Soobak.Algo.Sorting",
   "references": [
+    "Soobak.Algo.Core",
     "UniTask"
   ],
   "includePlatforms": [],
