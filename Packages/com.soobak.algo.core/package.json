@@ -1,0 +1,18 @@
+﻿{
+  "name": "com.soobak.algo.core",
+  "displayName": "Soobak Algorithm Core",
+  "description": "Reusable algorithm visualization core components for Soobak projects.",
+  "version": "0.1.0",
+  "unity": "6000.0",
+  "author": {
+    "name": "Soobak",
+    "email": "contact@soobak.dev"
+  },
+  "keywords": [
+    "algorithm",
+    "sorting",
+    "visualization"
+  ],
+  "dependencies": {},
+  "samples": []
+}

@@ -1,0 +1,21 @@
+﻿{
+  "name": "Soobak.Algo.Core.Tests",
+  "rootNamespace": "Soobak.Algo.Core.Tests",
+  "references": [
+    "Soobak.Algo.Core"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": false,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false,
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ]
+}
