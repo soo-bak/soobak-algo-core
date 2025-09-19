@@ -1,0 +1,62 @@
+﻿# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+name: Commit Sentinel
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  checks: write
+  statuses: write
+
+jobs:
+  signature-and-style:
+    name: Trust & Style Audit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout full history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Ensure commits are signed
+        uses: zgosalvez/github-actions-ensure-commit-signed@v1
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Lint commit titles
+        shell: pwsh
+        run: |
+          $eventName = '${{ github.event_name }}'
+          if ($eventName -eq 'pull_request') {
+            $base = '${{ github.event.pull_request.base.sha }}'
+            $head = '${{ github.event.pull_request.head.sha }}'
+            $range = "$base..$head"
+          } else {
+            $before = '${{ github.event.before }}'
+            $after = '${{ github.sha }}'
+            if ($before -and $before -ne '0000000000000000000000000000000000000000') {
+              $range = "$before..$after"
+            } else {
+              $range = $after
+            }
+          }
+
+          $pattern = '^:[a-z_]+: [a-z0-9-]+: .+'
+          $invalid = @()
+          git log --format='%h%x09%s' $range | ForEach-Object {
+            $parts = $_ -split "\t", 2
+            if ($parts.Length -lt 2) { return }
+            $subject = $parts[1]
+            if ($subject -notmatch $pattern) {
+              $invalid += $subject
+            }
+          }
+
+          if ($invalid.Count -gt 0) {
+            Write-Error "Commit message(s) violate ':gitmoji: scope: message' convention:`n- " + ($invalid -join "`n- ")
+          }

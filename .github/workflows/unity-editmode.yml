@@ -1,0 +1,88 @@
+﻿# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+name: Unity EditMode Suite
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  checks: write
+  statuses: write
+
+concurrency:
+  group: unity-editmode-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  UNITY_VERSION: 6000.0.0f1
+  PROJECT_PATH: .
+  TEST_PLATFORM: EditMode
+
+jobs:
+  editmode:
+    name: EditMode Regression
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+          fetch-depth: 0
+
+      - name: Install Unity
+        uses: game-ci/unity-setup@v4
+        with:
+          unityVersion: ${{ env.UNITY_VERSION }}
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Cache Library
+        uses: actions/cache@v4
+        with:
+          path: Library
+          key: ${{ runner.os }}-unity-${{ env.UNITY_VERSION }}-${{ hashFiles('Packages/packages-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-unity-${{ env.UNITY_VERSION }}-
+
+      - name: Run EditMode Tests
+        uses: game-ci/unity-test-runner@v4
+        with:
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          projectPath: ${{ env.PROJECT_PATH }}
+          unityVersion: ${{ env.UNITY_VERSION }}
+          testMode: ${{ env.TEST_PLATFORM }}
+          artifactsPath: Artifacts
+          coverageOptions: generateAdditionalMetrics;generateHtmlReport;generateBadgeReport
+
+      - name: Publish Artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: editmode-suite
+          path: Artifacts
+
+      - name: Surface Coverage Summary
+        if: always()
+        shell: pwsh
+        run: |
+          $summaryPath = Join-Path Artifacts "coverage/Report/Summary.xml"
+          if (Test-Path $summaryPath) {
+            [xml]$summary = Get-Content $summaryPath
+            $attributes = $summary.Summary.Attributes
+            $coverageAttr = $attributes.GetNamedItem('lineCoverage')
+            if (-not $coverageAttr) {
+              $coverageAttr = $attributes.GetNamedItem('linecoverage')
+            }
+            if ($coverageAttr) {
+              $coverage = [math]::Round([double]$coverageAttr.Value, 2)
+              Write-Host "::notice::Line coverage: $coverage%"
+            } else {
+              Write-Warning 'Coverage summary present but lineCoverage attribute missing.'
+            }
+          } else {
+            Write-Warning 'Coverage summary not generated.'
+          }
