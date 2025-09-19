@@ -28,7 +28,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p ~/.ssh
-          printf "%s`n" 'soo-bak@github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDwMav68GMpY0c5ZkVv859NppHgfzMfrCYyQuByZwNtq' > ~/.ssh/allowed_signers
+          printf "%s\n" 'soo-bak@github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDwMav68GMpY0c5ZkVv859NppHgfzMfrCYyQuByZwNtq' > ~/.ssh/allowed_signers
           git config --global gpg.format ssh
           git config --global gpg.ssh.allowedSignersFile ~/.ssh/allowed_signers
 
@@ -36,48 +36,64 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            range="${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}"
-          elif [ -n "${{ github.event.before }}" ] && [ "${{ github.event.before }}" != "0000000000000000000000000000000000000000" ]; then
-            range="${{ github.event.before }}..${{ github.sha }}"
+          event="${{ github.event_name }}"
+          head="${{ github.sha }}"
+          commit_file="$GITHUB_WORKSPACE/.git/commit_range"
+
+          if [ "$event" = "pull_request" ]; then
+            base="${{ github.event.pull_request.base.sha }}"
+            commits=$(git rev-list "$head" "^$base")
+          elif [ "$event" = "push" ] && [ "${{ github.event.before }}" != "0000000000000000000000000000000000000000" ] && [ -n "${{ github.event.before }}" ]; then
+            before="${{ github.event.before }}"
+            commits=$(git rev-list "$head" "^$before")
           else
-            range="${{ github.sha }}"
+            commits=$(git rev-list "$head" -n 1)
           fi
+
+          commits=$(echo "$commits" | sed '/^$/d')
+          if [ -z "$commits" ]; then
+            echo "::notice::No commits to verify."
+            exit 0
+          fi
+
+          printf "%s\n" "$commits" > "$commit_file"
+          echo "COMMIT_LIST_FILE=$commit_file" >> "$GITHUB_ENV"
 
           while read -r commit; do
             if ! git verify-commit "$commit" >/dev/null 2>&1; then
               echo "::error::Commit $commit lacks a trusted signature" >&2
               exit 1
             fi
-          done < <(git rev-list "$range")
+          done < "$commit_file"
 
       - name: Lint commit titles
         shell: pwsh
         run: |
-          $eventName = '${{ github.event_name }}'
-          if ($eventName -eq 'pull_request') {
-            $range = '${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}'
-          } else {
-            $before = '${{ github.event.before }}'
-            $after = '${{ github.sha }}'
-            if ($before -and $before -ne '0000000000000000000000000000000000000000') {
-              $range = "$before..$after"
-            } else {
-              $range = $after
-            }
+          $commitFile = ${env:COMMIT_LIST_FILE}
+          if (-not $commitFile -or -not (Test-Path $commitFile)) {
+              $commitFile = Join-Path $env:GITHUB_WORKSPACE '.git/commit_range'
+          }
+
+          if (-not (Test-Path $commitFile)) {
+              Write-Host '::notice::No commits to lint.'
+              return
+          }
+
+          $commits = Get-Content $commitFile | Where-Object { $_ }
+          if ($commits.Count -eq 0) {
+              Write-Host '::notice::No commits to lint.'
+              return
           }
 
           $pattern = '^:[a-z_]+: [a-z0-9-]+: .+'
           $invalid = @()
-          git log --format='%h%x09%s' $range | ForEach-Object {
-            $parts = $_ -split "\t", 2
-            if ($parts.Length -lt 2) { return }
-            $subject = $parts[1]
-            if ($subject -notmatch $pattern) {
-              $invalid += $subject
-            }
+          foreach ($commit in $commits) {
+              $subject = git log --format='%s' -n 1 $commit
+              if ($subject -notmatch $pattern) {
+                  $invalid += "${commit}: $subject"
+              }
           }
 
           if ($invalid.Count -gt 0) {
-            Write-Error "Commit message(s) violate ':gitmoji: scope: message' convention:`n- " + ($invalid -join "`n- ")
+              Write-Error "Commit message(s) violate ':gitmoji: scope: message' convention:`n- " + ($invalid -join "`n- ")
           }
