@@ -24,6 +24,8 @@ env:
 
 jobs:
   editmode:
+    env:
+      UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
     name: EditMode Regression
     runs-on: ubuntu-latest
     timeout-minutes: 40
