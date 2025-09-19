@@ -28,9 +28,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p ~/.ssh
-          cat <<'EOF' > ~/.ssh/allowed_signers
-soo-bak@github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDwMav68GMpY0c5ZkVv859NppHgfzMfrCYyQuByZwNtq
-EOF
+          printf "%s`n" 'soo-bak@github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDwMav68GMpY0c5ZkVv859NppHgfzMfrCYyQuByZwNtq' > ~/.ssh/allowed_signers
           git config --global gpg.format ssh
           git config --global gpg.ssh.allowedSignersFile ~/.ssh/allowed_signers
 
