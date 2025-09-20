@@ -111,22 +111,26 @@ jobs:
           ACTIONS_STEP_DEBUG: ${{ runner.debug }}
 
       - name: Load summary
-        if: always() && ${{ hashFiles('summary.env') != '' }}
+        if: always() && steps.summarize.outcome == 'success'
         shell: pwsh
         run: |
-          Get-Content summary.env | ForEach-Object {
-            if ($_ -match '^(.*?)=(.*)$') {
-              $name = $matches[1]
-              $value = $matches[2]
-              echo "$name=$value" >> $env:GITHUB_OUTPUT
+          if (Test-Path summary.env) {
+            Get-Content summary.env | ForEach-Object {
+              if ($_ -match '^(.*?)=(.*)$') {
+                $name = $matches[1]
+                $value = $matches[2]
+                echo "$name=$value" >> $env:GITHUB_OUTPUT
+              }
             }
+          } else {
+            Write-Warning 'summary.env file not found, skipping summary load'
           }
         id: summary
 
       - name: Calculate test success rate
         if: always()
         run: |
-          if [ -n "${{ steps.summary.outputs.total }}" ] && [ "${{ steps.summary.outputs.total }}" != "0" ]; then
+          if [ -n "${{ steps.summary.outputs.total }}" ] && [ "${{ steps.summary.outputs.total }}" != "0" ] && [ "${{ steps.summary.outputs.total }}" != "null" ]; then
             total=${{ steps.summary.outputs.total }}
             passed=${{ steps.summary.outputs.passed }}
             success_rate=$((passed * 100 / total))
@@ -134,7 +138,7 @@ jobs:
             echo "Test success rate: $success_rate% ($passed/$total)"
           else
             echo "SUCCESS_RATE=0" >> $GITHUB_ENV
-            echo "No test results available"
+            echo "No test results available or summary not loaded"
           fi
 
       - name: Upload test success badge
