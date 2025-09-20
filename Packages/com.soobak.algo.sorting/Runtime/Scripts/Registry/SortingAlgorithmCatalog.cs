@@ -93,6 +93,18 @@ namespace Soobak.Algo.Sorting {
         });
 
       yield return AlgorithmDescriptor.Create<SortingState, SortOp>(
+        id: "counting-sort",
+        displayName: "Counting Sort",
+        description: "Stable counting sort for integer keys using prefix sums.",
+        factory: () => new CountingSortAlgorithm(),
+        metadata: new Dictionary<string, string> {
+          { "complexity-average", "O(n + k)" },
+          { "complexity-best", "O(n + k)" },
+          { "complexity-worst", "O(n + k)" },
+          { "stability", "Stable" }
+        });
+
+      yield return AlgorithmDescriptor.Create<SortingState, SortOp>(
         id: "quick-sort",
         displayName: "Quick Sort",
         description: "Quick sort using Lomuto partitioning with pivot highlighting.",
