@@ -1,4 +1,4 @@
-﻿# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
 name: Unity EditMode Suite
 
 on:
@@ -59,6 +59,7 @@ jobs:
           testMode: ${{ env.TEST_PLATFORM }}
           artifactsPath: Artifacts
           coverageOptions: generateAdditionalMetrics;generateHtmlReport;generateBadgeReport
+          customParameters: -enableCodeCoverage -coverageResultsPath Artifacts/coverage -coverageHistoryPath Artifacts/coverage-history
 
       - name: Publish Artifacts
         if: always()
