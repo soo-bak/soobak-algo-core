@@ -78,13 +78,23 @@ jobs:
           name: editmode-suite
           path: Artifacts
 
+      - name: Inspect Coverage Outputs
+        if: always()
+        shell: pwsh
+        run: |
+          if (Test-Path Artifacts) {
+            Get-ChildItem -Recurse Artifacts | ForEach-Object { Write-Host $_.FullName }
+          } else {
+            Write-Warning 'Artifacts directory not found.'
+          }
+
       - name: Surface Coverage Summary
         if: always()
         shell: pwsh
         run: |
-          $summaryPath = Join-Path Artifacts "coverage/Report/Summary.xml"
-          if (Test-Path $summaryPath) {
-            [xml]$summary = Get-Content $summaryPath
+          $summaryFile = Get-ChildItem -Path Artifacts -Recurse -Filter Summary.xml -ErrorAction SilentlyContinue | Select-Object -First 1
+          if ($summaryFile) {
+            [xml]$summary = Get-Content $summaryFile.FullName
             $attributes = $summary.Summary.Attributes
             $coverageAttr = $attributes.GetNamedItem('lineCoverage')
             if (-not $coverageAttr) {
