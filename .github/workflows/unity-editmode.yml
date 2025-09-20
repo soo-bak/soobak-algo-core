@@ -18,7 +18,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  UNITY_VERSION: 6000.0.0f1
+  UNITY_VERSION: 6000.2.5f1
   PROJECT_PATH: .
   TEST_PLATFORM: EditMode
 
