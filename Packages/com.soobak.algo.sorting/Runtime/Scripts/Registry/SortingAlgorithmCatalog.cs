@@ -55,6 +55,18 @@ namespace Soobak.Algo.Sorting {
           { "complexity-worst", "O(n^2)" },
           { "stability", "Unstable" }
         });
+
+      yield return AlgorithmDescriptor.Create<SortingState, SortOp>(
+        id: "merge-sort",
+        displayName: "Merge Sort (Stable)",
+        description: "Stable merge sort that merges sorted partitions while preserving order of equals.",
+        factory: () => new MergeSortAlgorithm(),
+        metadata: new Dictionary<string, string> {
+          { "complexity-average", "O(n log n)" },
+          { "complexity-best", "O(n log n)" },
+          { "complexity-worst", "O(n log n)" },
+          { "stability", "Stable" }
+        });
     }
   }
 }
