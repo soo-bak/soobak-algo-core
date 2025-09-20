@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Cysharp.Threading.Tasks;
 using NUnit.Framework;
@@ -48,7 +49,7 @@ namespace Soobak.Algo.Sorting.Tests {
       var algorithm = new RadixSortAlgorithm();
       var state = SortingState.FromValues(new[] { 3, -1, 2 });
 
-      LogAssert.Expect(LogType.Error, "RadixSortAlgorithm: Execution failed. System.NotSupportedException: RadixSortAlgorithm currently supports non-negative integers only.");
+      LogAssert.Expect(LogType.Error, new Regex("^RadixSortAlgorithm: Execution failed.*non-negative integers only\\.", RegexOptions.Singleline));
       Assert.ThrowsAsync<NotSupportedException>(async () => await algorithm.ExecuteAsync(state, new NoOpSink(), CancellationToken.None));
     }
 
