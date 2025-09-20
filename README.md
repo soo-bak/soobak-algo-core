@@ -5,7 +5,7 @@ Reusable Unity 6 algorithm pipeline. `com.soobak.algo.core` defines execution pr
 ## Architecture Layers
 - **Core Primitives**: `IAlgorithm<TState, TEvent>` and `IAlgorithmStepSink<TState, TEvent>` contracts with `AlgorithmRunner<TState, TEvent>` handling snapshot cloning and fan-out.
 - **Core Pipeline**: `IAlgorithmDescriptor<TState, TEvent>`, `IAlgorithmCatalog<TState, TEvent>`, and `AlgorithmPipeline<TState, TEvent>` model how algorithms are registered, discovered, and executed.
-- **Sorting Module**: `SortingState`/`SortingItem`, `SortOp`, `IBarVisualizer`, `SortingAlgorithmCatalog`, and `SortingRunner` demonstrate the pipeline with bubble, selection, merge, quick, and stable insertion sort implementations.
+- **Sorting Module**: `SortingState`/`SortingItem`, `SortOp`, `IBarVisualizer`, `SortingAlgorithmCatalog`, and `SortingRunner` demonstrate the pipeline with bubble, selection, merge, heap, quick, and stable insertion sort implementations.
 
 ## Execution Flow
 1. `SortingAlgorithmCatalog` exposes descriptors created via `AlgorithmDescriptor.Create`.
@@ -51,6 +51,6 @@ Reusable Unity 6 algorithm pipeline. `com.soobak.algo.core` defines execution pr
 - See `Docs/architecture.md` for layering responsibilities and extension guidance.
 
 ## Roadmap
-- Register additional descriptors (e.g., Merge Sort, Quick Sort).
+- Extend the catalog with additional algorithms (e.g., counting sort, shell sort).
 - Spin up new domain packages (e.g., graph search) that reuse the core pipeline.
 - Validate Git UPM consumption from a demo repository with WebGL publishing.

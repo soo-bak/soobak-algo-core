@@ -69,6 +69,18 @@ namespace Soobak.Algo.Sorting {
         });
 
       yield return AlgorithmDescriptor.Create<SortingState, SortOp>(
+        id: "heap-sort",
+        displayName: "Heap Sort",
+        description: "In-place heap sort using a max-heap built from the input sequence.",
+        factory: () => new HeapSortAlgorithm(),
+        metadata: new Dictionary<string, string> {
+          { "complexity-average", "O(n log n)" },
+          { "complexity-best", "O(n log n)" },
+          { "complexity-worst", "O(n log n)" },
+          { "stability", "Unstable" }
+        });
+
+      yield return AlgorithmDescriptor.Create<SortingState, SortOp>(
         id: "quick-sort",
         displayName: "Quick Sort",
         description: "Quick sort using Lomuto partitioning with pivot highlighting.",
