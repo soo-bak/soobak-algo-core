@@ -20,7 +20,22 @@ jobs:
         with:
           script: |
             const title = context.payload.pull_request.title;
-            const pattern = /^:[a-z_]+: [A-Za-z-]+: [A-Za-z0-9 ,'-]+$/;
-            if (!pattern.test(title)) {
+            const parts = title.split(' ');
+            if (parts.length < 3) {
+              core.setFailed(`Pull request title '${title}' does not match ':gitmoji: scope: summary' format.`);
+              return;
+            }
+
+            const prefix = parts[0];
+            const rest = title.slice(prefix.length + 1);
+            const scopePattern = /^[A-Za-z-]+: [A-Za-z0-9 ,'-]+$/;
+            const emojiPattern = /^[\p{Extended_Pictographic}\p{Emoji_Presentation}]/u;
+            const colonPattern = /^:[a-z_]+:$/;
+            if (!(colonPattern.test(prefix) || emojiPattern.test(prefix))) {
+              core.setFailed(`Pull request title '${title}' must start with a :gitmoji: or emoji.`);
+              return;
+            }
+
+            if (!scopePattern.test(rest)) {
               core.setFailed(`Pull request title '${title}' does not match ':gitmoji: scope: summary' format.`);
             }
