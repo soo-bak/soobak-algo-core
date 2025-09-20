@@ -5,12 +5,12 @@ Reusable Unity 6 algorithm pipeline. `com.soobak.algo.core` defines execution pr
 ## Architecture Layers
 - **Core Primitives**: `IAlgorithm<TState, TEvent>` and `IAlgorithmStepSink<TState, TEvent>` contracts with `AlgorithmRunner<TState, TEvent>` handling snapshot cloning and fan-out.
 - **Core Pipeline**: `IAlgorithmDescriptor<TState, TEvent>`, `IAlgorithmCatalog<TState, TEvent>`, and `AlgorithmPipeline<TState, TEvent>` model how algorithms are registered, discovered, and executed.
-- **Sorting Module**: `SortingState`/`SortingItem`, `SortOp`, `IBarVisualizer`, `SortingAlgorithmCatalog`, and `SortingRunner` demonstrate the pipeline with bubble, selection, and stable insertion sort implementations.
+- **Sorting Module**: `SortingState`/`SortingItem`, `SortOp`, `IBarVisualizer`, `SortingAlgorithmCatalog`, and `SortingRunner` demonstrate the pipeline with bubble, selection, merge, and stable insertion sort implementations.
 
 ## Execution Flow
 1. `SortingAlgorithmCatalog` exposes descriptors created via `AlgorithmDescriptor.Create`.
 2. `SortingRunner` composes visualizers (`IBarVisualizer`) and, when supplied, the catalog to build an `AlgorithmPipeline`.
-3. Consumers either pass an `ISortingAlgorithm` directly or call `ExecuteAsync("selection-sort", state, token)`.
+3. Consumers either pass an `ISortingAlgorithm` directly or call `ExecuteAsync("merge-sort", state, token)`.
 4. Each step broadcasts a cloned `SortingState` and a `SortOp` event so visualizers receive immutable snapshots.
 
 ## Usage
@@ -36,7 +36,7 @@ Reusable Unity 6 algorithm pipeline. `com.soobak.algo.core` defines execution pr
    var catalog = new SortingAlgorithmCatalog();
    var runner = new SortingRunner(new BarVisualizer(), catalog);
    var state = SortingState.FromValues(new[] { 4, 2, 3, 1 });
-   var sorted = await runner.ExecuteAsync("selection-sort", state, CancellationToken.None);
+   var sorted = await runner.ExecuteAsync("merge-sort", state, CancellationToken.None);
    ```
 
 ## Testing Philosophy

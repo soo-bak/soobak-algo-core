@@ -43,10 +43,21 @@ namespace Soobak.Algo.Sorting.Tests {
     }
 
     [Test]
+    public void Catalog_ProvidesMergeSortDescriptor() {
+      var catalog = new SortingAlgorithmCatalog();
+
+      Assert.That(catalog.Descriptors.Any(d => d.Id == "merge-sort"), Is.True);
+      var descriptor = catalog.Descriptors.Single(d => d.Id == "merge-sort");
+      Assert.That(descriptor.DisplayName, Is.EqualTo("Merge Sort (Stable)"));
+      Assert.That(descriptor.Metadata["stability"], Is.EqualTo("Stable"));
+      Assert.That(descriptor.Metadata["complexity-average"], Is.EqualTo("O(n log n)"));
+    }
+
+    [Test]
     public void Catalog_TryGetDescriptor_FailsForUnknownId() {
       var catalog = new SortingAlgorithmCatalog();
 
-      var result = catalog.TryGetDescriptor("merge-sort", out var descriptor);
+      var result = catalog.TryGetDescriptor("heap-sort", out var descriptor);
 
       Assert.That(result, Is.False);
       Assert.That(descriptor, Is.Null);
@@ -85,14 +96,14 @@ namespace Soobak.Algo.Sorting.Tests {
     }
 
     [Test]
-    public async Task ExecuteAsync_SelectionSortDescriptor_RunsPipelineAndSorts() {
+    public async Task ExecuteAsync_MergeSortDescriptor_RunsPipelineAndSorts() {
       var catalog = new SortingAlgorithmCatalog();
       var visualizer = new RecordingVisualizer();
       var runner = new SortingRunner(visualizer, catalog);
       var initial = SortingState.FromValues(new[] { 7, 3, 6, 2 });
       var original = initial.Clone();
 
-      var result = await runner.ExecuteAsync("selection-sort", initial, CancellationToken.None);
+      var result = await runner.ExecuteAsync("merge-sort", initial, CancellationToken.None);
 
       Assert.That(original.Items.Select(item => item.Value), Is.EqualTo(new[] { 7, 3, 6, 2 }));
       Assert.That(result.Items.Select(item => item.Value), Is.EqualTo(new[] { 2, 3, 6, 7 }));
