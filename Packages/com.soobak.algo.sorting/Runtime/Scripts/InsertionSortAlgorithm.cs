@@ -1,48 +1,52 @@
-﻿using System;
-using System.Collections.Generic;
+using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using Soobak.Algo.Core;
 using UnityEngine;
 
 namespace Soobak.Algo.Sorting {
   public sealed class InsertionSortAlgorithm : ISortingAlgorithm {
     public string Id => "insertion-sort";
 
-    public async UniTask ExecuteAsync(List<SortItem> items, Func<SortOp, UniTask> publishEvent, CancellationToken cancellationToken) {
-      if (items == null)
-        throw new ArgumentNullException(nameof(items));
+    public async UniTask ExecuteAsync(SortingState state, IAlgorithmStepSink<SortingState, SortOp> sink, CancellationToken cancellationToken) {
+      if (state == null)
+        throw new ArgumentNullException(nameof(state));
 
-      if (publishEvent == null)
-        throw new ArgumentNullException(nameof(publishEvent));
+      if (sink == null)
+        throw new ArgumentNullException(nameof(sink));
 
-      for (var i = 1; i < items.Count; i++) {
-        cancellationToken.ThrowIfCancellationRequested();
-
-        var key = items[i];
-        var j = i - 1;
-
-        await publishEvent(SortOp.Highlight(i));
-
-        while (j >= 0) {
+      try {
+        for (var i = 1; i < state.Items.Count; i++) {
           cancellationToken.ThrowIfCancellationRequested();
 
-          await publishEvent(SortOp.Compare(j, j + 1));
+          await sink.PublishAsync(new AlgorithmStep<SortingState, SortOp>(state.Clone(), SortOp.Highlight(i, "Start insertion")), cancellationToken);
 
-          if (items[j].Value <= key.Value)
-            break;
+          var current = state.Items[i];
+          var targetIndex = i;
 
-          var shifted = items[j];
-          items[j + 1] = shifted;
-          await publishEvent(SortOp.Shift(j, j + 1, shifted));
-          j--;
+          while (targetIndex > 0 && state.Items[targetIndex - 1].Value > current.Value) {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            await sink.PublishAsync(new AlgorithmStep<SortingState, SortOp>(state.Clone(), SortOp.Compare(targetIndex - 1, targetIndex)), cancellationToken);
+            targetIndex--;
+          }
+
+          if (targetIndex != i) {
+            state.Move(i, targetIndex);
+            await sink.PublishAsync(new AlgorithmStep<SortingState, SortOp>(state.Clone(), SortOp.Insert(i, targetIndex, current)), cancellationToken);
+          }
         }
 
-        var insertIndex = j + 1;
-        items[insertIndex] = key;
-        await publishEvent(SortOp.Insert(insertIndex, key));
+        await sink.PublishAsync(new AlgorithmStep<SortingState, SortOp>(state.Clone(), SortOp.Finalize("Insertion sort complete")), cancellationToken);
       }
-
-      Debug.Log($"InsertionSortAlgorithm: Finished sorting {items.Count} items.");
+      catch (OperationCanceledException ex) {
+        Debug.LogWarning($"InsertionSortAlgorithm: Execution cancelled. {ex.Message}");
+        throw;
+      }
+      catch (Exception ex) {
+        Debug.LogError($"InsertionSortAlgorithm: Execution failed. {ex}");
+        throw;
+      }
     }
   }
 }
