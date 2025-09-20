@@ -101,7 +101,7 @@ jobs:
           }
 
       - name: Report Test Summary
-        if: ${{ github.event_name == 'pull_request' }}
+        if: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository }}
         uses: peter-evans/create-or-update-comment@v4
         with:
           issue-number: ${{ github.event.pull_request.number }}
@@ -111,7 +111,6 @@ jobs:
             Status: **${{ steps.run-tests.outcome == 'success' && 'PASS' || 'FAIL' }}**
             - Workflow: [View Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
             - Artifacts: `editmode-suite`
-          comment-identifier: unity-editmode-suite
 
       - name: Fail on Test Failure
         if: ${{ steps.run-tests.outcome == 'failure' }}
