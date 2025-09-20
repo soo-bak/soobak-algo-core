@@ -32,6 +32,17 @@ namespace Soobak.Algo.Sorting.Tests {
     }
 
     [Test]
+    public void Catalog_ProvidesSelectionSortDescriptor() {
+      var catalog = new SortingAlgorithmCatalog();
+
+      Assert.That(catalog.Descriptors.Any(d => d.Id == "selection-sort"), Is.True);
+      var descriptor = catalog.Descriptors.Single(d => d.Id == "selection-sort");
+      Assert.That(descriptor.DisplayName, Is.EqualTo("Selection Sort"));
+      Assert.That(descriptor.Metadata["stability"], Is.EqualTo("Unstable"));
+      Assert.That(descriptor.Metadata["complexity-worst"], Is.EqualTo("O(n^2)"));
+    }
+
+    [Test]
     public void Catalog_TryGetDescriptor_FailsForUnknownId() {
       var catalog = new SortingAlgorithmCatalog();
 
@@ -71,6 +82,22 @@ namespace Soobak.Algo.Sorting.Tests {
       Assert.That(result.Items.Select(item => item.Value), Is.EqualTo(new[] { 1, 2, 4, 5 }));
       Assert.That(visualizer.Events.Count, Is.GreaterThan(0));
       Assert.That(visualizer.CompletedSnapshot.Items.Select(item => item.Value), Is.EqualTo(new[] { 1, 2, 4, 5 }));
+    }
+
+    [Test]
+    public async Task ExecuteAsync_SelectionSortDescriptor_RunsPipelineAndSorts() {
+      var catalog = new SortingAlgorithmCatalog();
+      var visualizer = new RecordingVisualizer();
+      var runner = new SortingRunner(visualizer, catalog);
+      var initial = SortingState.FromValues(new[] { 7, 3, 6, 2 });
+      var original = initial.Clone();
+
+      var result = await runner.ExecuteAsync("selection-sort", initial, CancellationToken.None);
+
+      Assert.That(original.Items.Select(item => item.Value), Is.EqualTo(new[] { 7, 3, 6, 2 }));
+      Assert.That(result.Items.Select(item => item.Value), Is.EqualTo(new[] { 2, 3, 6, 7 }));
+      Assert.That(visualizer.Events.Count, Is.GreaterThan(0));
+      Assert.That(visualizer.CompletedSnapshot.Items.Select(item => item.Value), Is.EqualTo(new[] { 2, 3, 6, 7 }));
     }
 
     sealed class RecordingVisualizer : IBarVisualizer {

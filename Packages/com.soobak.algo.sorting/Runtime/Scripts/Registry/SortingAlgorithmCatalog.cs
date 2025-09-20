@@ -43,6 +43,18 @@ namespace Soobak.Algo.Sorting {
           { "complexity-worst", "O(n^2)" },
           { "stability", "Stable" }
         });
+
+      yield return AlgorithmDescriptor.Create<SortingState, SortOp>(
+        id: "selection-sort",
+        displayName: "Selection Sort",
+        description: "Classic selection sort that highlights minimum selection before swapping.",
+        factory: () => new SelectionSortAlgorithm(),
+        metadata: new Dictionary<string, string> {
+          { "complexity-average", "O(n^2)" },
+          { "complexity-best", "O(n^2)" },
+          { "complexity-worst", "O(n^2)" },
+          { "stability", "Unstable" }
+        });
     }
   }
 }
