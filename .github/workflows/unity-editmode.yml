@@ -123,32 +123,30 @@ jobs:
           }
         id: summary
 
-      - name: Extract coverage percentage
+      - name: Calculate test success rate
         if: always()
         run: |
-          if [ -f Artifacts/coverage/Report/Summary.xml ]; then
-            percent=$(python3 -c "
-          import xml.etree.ElementTree as ET
-          root = ET.parse('Artifacts/coverage/Report/Summary.xml').getroot()
-          node = root.find('.//coverage')
-          print(float(node.get('percent')) if node is not None else 0.0)
-          ")
-            echo "COVERAGE=$percent" >> $GITHUB_ENV
+          if [ -n "${{ steps.summary.outputs.total }}" ] && [ "${{ steps.summary.outputs.total }}" != "0" ]; then
+            total=${{ steps.summary.outputs.total }}
+            passed=${{ steps.summary.outputs.passed }}
+            success_rate=$((passed * 100 / total))
+            echo "SUCCESS_RATE=$success_rate" >> $GITHUB_ENV
+            echo "Test success rate: $success_rate% ($passed/$total)"
           else
-            echo 'Coverage summary not found, defaulting to 0'
-            echo 'COVERAGE=0' >> $GITHUB_ENV
+            echo "SUCCESS_RATE=0" >> $GITHUB_ENV
+            echo "No test results available"
           fi
 
-      - name: Upload coverage badge
+      - name: Upload test success badge
         if: always()
         uses: schneegans/dynamic-badges-action@v1.7.0
         with:
           auth: ${{ secrets.BADGE_GIST_TOKEN }}
           gistID: 21437d3f33ae019a0b58a88a2bf90c56
           filename: sorting-algo-core-coverage.json
-          label: Coverage
-          message: "${{ env.COVERAGE }}%"
-          color: ${{ (env.COVERAGE >= 80 && 'brightgreen') || (env.COVERAGE >= 60 && 'yellow') || 'red' }}
+          label: Tests
+          message: "${{ env.SUCCESS_RATE }}%"
+          color: ${{ (env.SUCCESS_RATE >= 95 && 'brightgreen') || (env.SUCCESS_RATE >= 80 && 'yellow') || 'red' }}
 
       - name: Post PR Comment
         if: ${{ github.event_name == 'pull_request' && steps.summary.outputs.total != '' && github.event.pull_request.head.repo.full_name == github.repository }}
