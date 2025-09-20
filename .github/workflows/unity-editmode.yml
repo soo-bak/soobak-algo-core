@@ -59,6 +59,7 @@ jobs:
           testMode: ${{ env.TEST_PLATFORM }}
           artifactsPath: Artifacts
           coverageOptions: generateAdditionalMetrics;generateHtmlReport;generateBadgeReport
+          customImage: unityci/editor:ubuntu-6000.2.5f1-base-3.1
           customParameters: -enableCodeCoverage -coverageResultsPath Artifacts/coverage -coverageHistoryPath Artifacts/coverage-history
 
       - name: Publish Artifacts
