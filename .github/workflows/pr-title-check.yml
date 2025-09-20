@@ -20,7 +20,7 @@ jobs:
         with:
           script: |
             const title = context.payload.pull_request.title;
-            const pattern = /^:[a-z_]+: [A-Za-z-]+: [A-Za-z0-9 ,'-]+ \(#\d+\)$/;
+            const pattern = /^:[a-z_]+: [A-Za-z-]+: [A-Za-z0-9 ,'-]+$/;
             if (!pattern.test(title)) {
-              core.setFailed(`Pull request title '${title}' does not match ':gitmoji: scope: summary (#number)' format.`);
+              core.setFailed(`Pull request title '${title}' does not match ':gitmoji: scope: summary' format.`);
             }
