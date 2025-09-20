@@ -39,15 +39,31 @@ jobs:
           event="${{ github.event_name }}"
           head="${{ github.sha }}"
           commit_file="$GITHUB_WORKSPACE/.git/commit_range"
+          commits=""
+
+          ensure_commit() {
+            git rev-parse --quiet --verify "${1}^{commit}" > /dev/null 2>&1
+          }
 
           if [ "$event" = "pull_request" ]; then
             base="${{ github.event.pull_request.base.sha }}"
             commits=$(git rev-list "$head" "^$base")
-          elif [ "$event" = "push" ] && [ "${{ github.event.before }}" != "0000000000000000000000000000000000000000" ] && [ -n "${{ github.event.before }}" ]; then
+          elif [ "$event" = "push" ]; then
             before="${{ github.event.before }}"
-            commits=$(git rev-list "$head" "^$before")
-          else
+            if [ -n "$before" ] && [ "$before" != "0000000000000000000000000000000000000000" ]; then
+              if ! ensure_commit "$before"; then
+                git fetch --quiet origin "$before" || true
+              fi
+
+              if ensure_commit "$before"; then
+                commits=$(git rev-list "$head" "^$before")
+              fi
+            fi
+          fi
+
+          if [ -z "$commits" ]; then
             commits=$(git rev-list "$head" -n 1)
+            echo "::notice::Commit range fallback to HEAD only." >&2
           fi
 
           commits=$(echo "$commits" | sed '/^$/d')
@@ -71,29 +87,29 @@ jobs:
         run: |
           $commitFile = ${env:COMMIT_LIST_FILE}
           if (-not $commitFile -or -not (Test-Path $commitFile)) {
-              $commitFile = Join-Path $env:GITHUB_WORKSPACE '.git/commit_range'
+            $commitFile = Join-Path $env:GITHUB_WORKSPACE '.git/commit_range'
           }
 
           if (-not (Test-Path $commitFile)) {
-              Write-Host '::notice::No commits to lint.'
-              return
+            Write-Host '::notice::No commits to lint.'
+            return
           }
 
           $commits = Get-Content $commitFile | Where-Object { $_ }
           if ($commits.Count -eq 0) {
-              Write-Host '::notice::No commits to lint.'
-              return
+            Write-Host '::notice::No commits to lint.'
+            return
           }
 
           $pattern = '^:[a-z_]+: [a-z0-9-]+: .+'
           $invalid = @()
           foreach ($commit in $commits) {
-              $subject = git log --format='%s' -n 1 $commit
-              if ($subject -notmatch $pattern) {
-                  $invalid += "${commit}: $subject"
-              }
+            $subject = git log --format='%s' -n 1 $commit
+            if ($subject -notmatch $pattern) {
+              $invalid += "${commit}: $subject"
+            }
           }
 
           if ($invalid.Count -gt 0) {
-              Write-Error "Commit message(s) violate ':gitmoji: scope: message' convention:`n- " + ($invalid -join "`n- ")
+            Write-Error "Commit message(s) violate ':gitmoji: scope: message' convention:`n- " + ($invalid -join "`n- ")
           }
