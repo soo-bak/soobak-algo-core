@@ -4,12 +4,13 @@
 [![Commit Signing](https://img.shields.io/badge/commits%20signed-verified-brightgreen)](https://github.com/soo-bak/soobak-algo-core/commits)
 
 
-Reusable Unity 6 algorithm pipeline. `com.soobak.algo.core` defines execution primitives, while `com.soobak.algo.sorting` ships a sorting domain showcase.
+Reusable Unity 6 algorithm pipeline. `com.soobak.algo.core` defines execution primitives, while `com.soobak.algo.sorting` and `com.soobak.algo.search` ship domain-specific showcases.
 
 ## Architecture Layers
 - **Core Primitives**: `IAlgorithm<TState, TEvent>` and `IAlgorithmStepSink<TState, TEvent>` contracts with `AlgorithmRunner<TState, TEvent>` handling snapshot cloning and fan-out.
 - **Core Pipeline**: `IAlgorithmDescriptor<TState, TEvent>`, `IAlgorithmCatalog<TState, TEvent>`, and `AlgorithmPipeline<TState, TEvent>` model how algorithms are registered, discovered, and executed.
 - **Sorting Module**: `SortingState`/`SortingItem`, `SortOp`, `IBarVisualizer`, `SortingAlgorithmCatalog`, and `SortingRunner` demonstrate the pipeline with bubble, selection, merge, heap, shell, counting, quick, and stable insertion sort implementations.
+- **Search Module**: `SearchState`/`SearchResult`, `SearchEvent`, `ISearchAlgorithm`, and search-specific implementations for linear search, binary search, and other search algorithms.
 
 ## Execution Flow
 1. `SortingAlgorithmCatalog` exposes descriptors created via `AlgorithmDescriptor.Create`.
@@ -18,12 +19,13 @@ Reusable Unity 6 algorithm pipeline. `com.soobak.algo.core` defines execution pr
 4. Each step broadcasts a cloned `SortingState` and a `SortOp` event so visualizers receive immutable snapshots.
 
 ## Usage
-1. Add Git UPM dependencies.
+1. Add Git UPM dependencies using path parameters.
    ```json
    {
      "dependencies": {
-       "com.soobak.algo.core": "https://github.com/soobak-algo/soobak-algo-core.git",
-       "com.soobak.algo.sorting": "https://github.com/soobak-algo/soobak-algo-core.git?path=Packages/com.soobak.algo.sorting"
+       "com.soobak.algo.core": "https://github.com/soo-bak/soobak-algo-core.git?path=Packages/com.soobak.algo.core",
+       "com.soobak.algo.sorting": "https://github.com/soo-bak/soobak-algo-core.git?path=Packages/com.soobak.algo.sorting",
+       "com.soobak.algo.search": "https://github.com/soo-bak/soobak-algo-core.git?path=Packages/com.soobak.algo.search"
      }
    }
    ```
