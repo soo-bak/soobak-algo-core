@@ -81,6 +81,18 @@ namespace Soobak.Algo.Sorting {
         });
 
       yield return AlgorithmDescriptor.Create<SortingState, SortOp>(
+        id: "shell-sort",
+        displayName: "Shell Sort",
+        description: "Shell sort using halved gap sequence and in-place element shifting.",
+        factory: () => new ShellSortAlgorithm(),
+        metadata: new Dictionary<string, string> {
+          { "complexity-average", "O(n^(3/2))" },
+          { "complexity-best", "O(n log n)" },
+          { "complexity-worst", "O(n^(3/2))" },
+          { "stability", "Unstable" }
+        });
+
+      yield return AlgorithmDescriptor.Create<SortingState, SortOp>(
         id: "quick-sort",
         displayName: "Quick Sort",
         description: "Quick sort using Lomuto partitioning with pivot highlighting.",

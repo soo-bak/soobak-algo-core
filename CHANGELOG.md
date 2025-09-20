@@ -11,6 +11,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 - Architecture documentation and README updates describing layering and execution flow.
 - Selection, merge, and quick sort implementations with catalog registration and EditMode regression tests.
 - Heap sort implementation with catalog registration and edit-mode coverage.
+- Shell sort implementation with catalog registration and edit-mode coverage.
 
 ### Changed
 - SortingRunner now supports descriptor-driven execution via `ExecuteAsync(string, ...)` when a catalog is provided.
