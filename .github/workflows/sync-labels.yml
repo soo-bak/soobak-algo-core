@@ -2,9 +2,6 @@ name: Sync Labels
 
 on:
   workflow_dispatch:
-  push:
-    paths:
-      - .github/labels.yml
 
 permissions:
   contents: read

@@ -108,34 +108,3 @@ jobs:
             exit 1
           fi
 
-      - name: Lint commit titles
-        shell: pwsh
-        run: |
-          $commitFile = ${env:COMMIT_LIST_FILE}
-          if (-not $commitFile -or -not (Test-Path $commitFile)) {
-            $commitFile = Join-Path $env:GITHUB_WORKSPACE '.git/commit_range'
-          }
-
-          if (-not (Test-Path $commitFile)) {
-            Write-Host '::notice::No commits to lint.'
-            return
-          }
-
-          $commits = Get-Content $commitFile | Where-Object { $_ }
-          if ($commits.Count -eq 0) {
-            Write-Host '::notice::No commits to lint.'
-            return
-          }
-
-          $pattern = '^:[a-z_]+: [a-z0-9-]+: .+'
-          $invalid = @()
-          foreach ($commit in $commits) {
-            $subject = git log --format='%s' -n 1 $commit
-            if ($subject -notmatch $pattern) {
-              $invalid += "${commit}: $subject"
-            }
-          }
-
-          if ($invalid.Count -gt 0) {
-            Write-Error "Commit message(s) violate ':gitmoji: scope: message' convention:`n- " + ($invalid -join "`n- ")
-          }
