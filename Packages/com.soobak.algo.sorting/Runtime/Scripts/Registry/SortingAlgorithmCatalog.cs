@@ -105,6 +105,18 @@ namespace Soobak.Algo.Sorting {
         });
 
       yield return AlgorithmDescriptor.Create<SortingState, SortOp>(
+        id: "radix-sort",
+        displayName: "Radix Sort",
+        description: "LSD radix sort using counting sort passes per digit.",
+        factory: () => new RadixSortAlgorithm(),
+        metadata: new Dictionary<string, string> {
+          { "complexity-average", "O(d (n + k))" },
+          { "complexity-best", "O(d (n + k))" },
+          { "complexity-worst", "O(d (n + k))" },
+          { "stability", "Stable" }
+        });
+
+      yield return AlgorithmDescriptor.Create<SortingState, SortOp>(
         id: "quick-sort",
         displayName: "Quick Sort",
         description: "Quick sort using Lomuto partitioning with pivot highlighting.",
