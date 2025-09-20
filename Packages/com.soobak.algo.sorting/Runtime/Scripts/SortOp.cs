@@ -6,6 +6,8 @@ namespace Soobak.Algo.Sorting {
     Compare,
     Swap,
     Insert,
+    Pivot,
+    Partition,
     Finalize
   }
 
@@ -54,6 +56,17 @@ namespace Soobak.Algo.Sorting {
       if (item == null)
         throw new ArgumentNullException(nameof(item));
       return new SortOp(SortOpType.Insert, sourceIndex, targetIndex, item.Clone(), "Insert", DateTimeOffset.UtcNow);
+    }
+
+    public static SortOp Pivot(int index) {
+      ValidateIndex(index, nameof(index));
+      return new SortOp(SortOpType.Pivot, index, -1, null, "Pivot", DateTimeOffset.UtcNow);
+    }
+
+    public static SortOp Partition(int leftIndex, int rightIndex) {
+      ValidateIndex(leftIndex, nameof(leftIndex));
+      ValidateIndex(rightIndex, nameof(rightIndex));
+      return new SortOp(SortOpType.Partition, leftIndex, rightIndex, null, "Partition", DateTimeOffset.UtcNow);
     }
 
     public static SortOp Finalize(string message) {

@@ -67,6 +67,18 @@ namespace Soobak.Algo.Sorting {
           { "complexity-worst", "O(n log n)" },
           { "stability", "Stable" }
         });
+
+      yield return AlgorithmDescriptor.Create<SortingState, SortOp>(
+        id: "quick-sort",
+        displayName: "Quick Sort",
+        description: "Quick sort using Lomuto partitioning with pivot highlighting.",
+        factory: () => new QuickSortAlgorithm(),
+        metadata: new Dictionary<string, string> {
+          { "complexity-average", "O(n log n)" },
+          { "complexity-best", "O(n log n)" },
+          { "complexity-worst", "O(n^2)" },
+          { "stability", "Unstable" }
+        });
     }
   }
 }
