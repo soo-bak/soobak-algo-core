@@ -1,4 +1,4 @@
-# Soobak Algorithm Core & Sorting
+﻿# Soobak Algorithm Core & Sorting
 
 Reusable Unity 6 algorithm pipeline. `com.soobak.algo.core` defines execution primitives, while `com.soobak.algo.sorting` ships a sorting domain showcase.
 
@@ -46,6 +46,10 @@ Reusable Unity 6 algorithm pipeline. `com.soobak.algo.core` defines execution pr
 ## Continuous Integration
 - `.github/workflows/unity-editmode.yml` runs EditMode suites through `game-ci/unity-test-runner@v4`.
 - `.github/workflows/commit-sentinel.yml` enforces SSH-signed commits and the `:gitmoji: scope: message` style.
+
+## Samples
+- Import "Sorting Visualizer Demo" from the Package Manager samples to try the cube-based bar visualizer.
+- Attach `SortingDemoController` to an empty GameObject and press Play to run the selected algorithm.
 
 ## Additional Docs
 - See `Docs/architecture.md` for layering responsibilities and extension guidance.

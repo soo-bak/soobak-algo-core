@@ -1,4 +1,4 @@
-# Changelog
+﻿# Changelog
 
 All notable changes to this project will be documented in this file.
 
@@ -13,6 +13,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 - Heap sort implementation with catalog registration and edit-mode coverage.
 - Shell sort implementation with catalog registration and edit-mode coverage.
 - Counting sort implementation with catalog registration and edit-mode coverage.
+- Sorting visualizer sample with cube-based bar renderer and demo controller.
 
 ### Changed
 - SortingRunner now supports descriptor-driven execution via `ExecuteAsync(string, ...)` when a catalog is provided.
