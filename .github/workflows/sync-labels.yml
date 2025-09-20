@@ -1,0 +1,40 @@
+name: Sync Labels
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/labels.yml
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  sync-labels:
+    name: Sync Repository Labels
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Sync labels via gh api
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          labels_json=$(ruby -ryaml -rjson -e 'puts YAML.load_file(ARGV[0]).to_json' .github/labels.yml)
+          echo "$labels_json" | jq -c '.[]' | while read -r label; do
+            name=$(echo "$label" | jq -r '.name')
+            color=$(echo "$label" | jq -r '.color // "cfd3d7"' | tr '[:lower:]' '[:upper:]' | tr -d '#')
+            description=$(echo "$label" | jq -r '.description // ""')
+            encoded_name=$(jq -nr --arg v "$name" '$v|@uri')
+            if gh api --silent --method PATCH "/repos/${GITHUB_REPOSITORY}/labels/${encoded_name}" \
+              -f new_name="$name" -f color="$color" -f description="$description"; then
+              echo "Updated label: $name"
+            else
+              gh api --silent --method POST "/repos/${GITHUB_REPOSITORY}/labels" \
+                -f name="$name" -f color="$color" -f description="$description"
+              echo "Created label: $name"
+            fi
+          done
