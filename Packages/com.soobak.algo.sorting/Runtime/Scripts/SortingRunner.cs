@@ -27,6 +27,10 @@ namespace Soobak.Algo.Sorting {
       _pipeline = catalog != null ? new AlgorithmPipeline<SortingState, SortOp>(CloneState, _visualizers, catalog.Descriptors) : null;
     }
 
+    public SortingRunner(IBarVisualizer visualizer, IAlgorithmCatalog<SortingState, SortOp>? catalog = null)
+      : this(new[] { visualizer ?? throw new ArgumentNullException(nameof(visualizer)) }, catalog) {
+    }
+
     public SortingRunner(params IBarVisualizer[] visualizers)
       : this((IEnumerable<IBarVisualizer>)(visualizers ?? Array.Empty<IBarVisualizer>())) {
     }
