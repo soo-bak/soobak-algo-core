@@ -1,4 +1,4 @@
-# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+﻿# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
 name: Unity EditMode Suite
 
 on:
@@ -122,6 +122,31 @@ jobs:
             }
           }
         id: summary
+
+      - name: Calculate test success rate
+        if: always()
+        run: |
+          if [ -n "${{ steps.summary.outputs.total }}" ] && [ "${{ steps.summary.outputs.total }}" != "0" ]; then
+            total=${{ steps.summary.outputs.total }}
+            passed=${{ steps.summary.outputs.passed }}
+            success_rate=$((passed * 100 / total))
+            echo "SUCCESS_RATE=$success_rate" >> $GITHUB_ENV
+            echo "Test success rate: $success_rate% ($passed/$total)"
+          else
+            echo "SUCCESS_RATE=0" >> $GITHUB_ENV
+            echo "No test results available"
+          fi
+
+      - name: Upload test success badge
+        if: always()
+        uses: schneegans/dynamic-badges-action@v1.7.0
+        with:
+          auth: ${{ secrets.BADGE_GIST_TOKEN }}
+          gistID: 21437d3f33ae019a0b58a88a2bf90c56
+          filename: sorting-algo-core-coverage.json
+          label: Tests
+          message: "${{ env.SUCCESS_RATE }}%"
+          color: ${{ (env.SUCCESS_RATE >= 95 && 'brightgreen') || (env.SUCCESS_RATE >= 80 && 'yellow') || 'red' }}
 
       - name: Post PR Comment
         if: ${{ github.event_name == 'pull_request' && steps.summary.outputs.total != '' && github.event.pull_request.head.repo.full_name == github.repository }}
