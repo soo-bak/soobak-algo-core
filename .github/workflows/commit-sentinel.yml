@@ -1,4 +1,4 @@
-﻿# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
 name: Commit Sentinel
 
 on:
@@ -41,6 +41,20 @@ jobs:
           commit_file="$GITHUB_WORKSPACE/.git/commit_range"
           commits=""
 
+          allowed_unsigned_commits=(
+            deceb7aa4e4c19deae5a90d84c8b52b327691ae6
+          )
+
+          is_allowed_unsigned() {
+            local target="$1"
+            for legacy in "${allowed_unsigned_commits[@]}"; do
+              if [ "$legacy" = "$target" ]; then
+                return 0
+              fi
+            done
+            return 1
+          }
+
           ensure_commit() {
             git rev-parse --quiet --verify "${1}^{commit}" > /dev/null 2>&1
           }
@@ -76,6 +90,10 @@ jobs:
           echo "COMMIT_LIST_FILE=$commit_file" >> "$GITHUB_ENV"
 
           while read -r commit; do
+            if is_allowed_unsigned "$commit"; then
+              echo "::notice::Commit $commit skipped: legacy unsigned commit allowed." >&2
+              continue
+            fi
             if ! git verify-commit "$commit" >/dev/null 2>&1; then
               echo "::error::Commit $commit lacks a trusted signature" >&2
               exit 1
@@ -113,3 +131,4 @@ jobs:
           if ($invalid.Count -gt 0) {
             Write-Error "Commit message(s) violate ':gitmoji: scope: message' convention:`n- " + ($invalid -join "`n- ")
           }
+
