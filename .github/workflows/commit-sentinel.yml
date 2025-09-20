@@ -43,6 +43,7 @@ jobs:
 
           allowed_unsigned_commits=(
             deceb7aa4e4c19deae5a90d84c8b52b327691ae6
+            c6476b9aaadf0db91b9e119e6b2d2d92d2348736
           )
 
           is_allowed_unsigned() {
@@ -131,4 +132,6 @@ jobs:
           if ($invalid.Count -gt 0) {
             Write-Error "Commit message(s) violate ':gitmoji: scope: message' convention:`n- " + ($invalid -join "`n- ")
           }
+
+
 
