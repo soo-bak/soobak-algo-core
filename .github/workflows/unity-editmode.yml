@@ -102,16 +102,28 @@ jobs:
               "skipped=$skipped" | Out-File -FilePath summary.env -Encoding utf8 -Append
               "overall=$result" | Out-File -FilePath summary.env -Encoding utf8 -Append
             } else {
-              Write-Host "::notice::editmode-results.xml located at $($resultFile.FullName)"
+              Write-Host "::notice::editmode-results.xml located at $($resultFile.FullName) but no test-run node found"
+              # Create empty summary for failed parsing
+              "total=0" | Out-File -FilePath summary.env -Encoding utf8
+              "passed=0" | Out-File -FilePath summary.env -Encoding utf8 -Append
+              "failed=0" | Out-File -FilePath summary.env -Encoding utf8 -Append
+              "skipped=0" | Out-File -FilePath summary.env -Encoding utf8 -Append
+              "overall=Failed" | Out-File -FilePath summary.env -Encoding utf8 -Append
             }
           } else {
-            Write-Warning 'editmode-results.xml not generated.'
+            Write-Warning 'editmode-results.xml not generated. Creating empty summary.'
+            # Create empty summary when no test results
+            "total=0" | Out-File -FilePath summary.env -Encoding utf8
+            "passed=0" | Out-File -FilePath summary.env -Encoding utf8 -Append
+            "failed=0" | Out-File -FilePath summary.env -Encoding utf8 -Append
+            "skipped=0" | Out-File -FilePath summary.env -Encoding utf8 -Append
+            "overall=NoResults" | Out-File -FilePath summary.env -Encoding utf8 -Append
           }
         env:
           ACTIONS_STEP_DEBUG: ${{ runner.debug }}
 
       - name: Load summary
-        if: always() && steps.summarize.outcome == 'success'
+        if: always()
         shell: pwsh
         run: |
           if (Test-Path summary.env) {
@@ -122,8 +134,15 @@ jobs:
                 echo "$name=$value" >> $env:GITHUB_OUTPUT
               }
             }
+            Write-Host "Summary loaded from summary.env"
           } else {
-            Write-Warning 'summary.env file not found, skipping summary load'
+            Write-Warning 'summary.env file not found, this should not happen'
+            # Fallback values
+            echo "total=0" >> $env:GITHUB_OUTPUT
+            echo "passed=0" >> $env:GITHUB_OUTPUT
+            echo "failed=0" >> $env:GITHUB_OUTPUT
+            echo "skipped=0" >> $env:GITHUB_OUTPUT
+            echo "overall=NoResults" >> $env:GITHUB_OUTPUT
           }
         id: summary
 
