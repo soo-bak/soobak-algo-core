@@ -19,6 +19,11 @@ jobs:
       results-path: ${{ steps.collect.outputs.results-path }}
       status: ${{ steps.collect.outputs.status }}
     steps:
+      - name: Log workflow context
+        run: |
+          echo "Workflow run conclusion: ${{ github.event.workflow_run.conclusion }}"
+          echo "Workflow run event: ${{ github.event.workflow_run.event }}"
+
       - name: Download artifact
         uses: actions/github-script@v7
         id: download
@@ -46,7 +51,7 @@ jobs:
             const artifactPath = path.join(process.cwd(), 'artifact.zip');
             fs.writeFileSync(artifactPath, Buffer.from(download.data));
             core.setOutput('zip-path', artifactPath);
-            core.setOutput('status', context.payload.workflow_run.conclusion);
+            core.setOutput('status', context.payload.workflow_run.conclusion ?? 'unknown');
 
       - name: Unzip artifact
         if: ${{ steps.download.outputs.zip-path }}
@@ -57,15 +62,18 @@ jobs:
       - name: Locate test results
         id: collect
         run: |
+          status='${{ steps.download.outputs.status }}'
+          if [ -z "$status" ]; then status='unknown'; fi
           if [ -z "${{ steps.download.outputs.zip-path }}" ]; then
+            echo "::warning::Artifact zip path missing."
             echo "results-path=" >> $GITHUB_OUTPUT
-            echo "status=${{ steps.download.outputs.status }}" >> $GITHUB_OUTPUT
+            echo "status=$status" >> $GITHUB_OUTPUT
             exit 0
           fi
           if [ ! -d artifact ]; then
             echo "::warning::Artifact directory not found." >&2
             echo "results-path=" >> $GITHUB_OUTPUT
-            echo "status=${{ steps.download.outputs.status }}" >> $GITHUB_OUTPUT
+            echo "status=$status" >> $GITHUB_OUTPUT
             exit 0
           fi
           results=$(find artifact -name editmode-results.xml | head -n 1)
@@ -74,8 +82,9 @@ jobs:
             echo "results-path=" >> $GITHUB_OUTPUT
           else
             echo "results-path=$results" >> $GITHUB_OUTPUT
+            echo "::notice::Using results file $results"
           fi
-          echo "status=${{ steps.download.outputs.status }}" >> $GITHUB_OUTPUT
+          echo "status=$status" >> $GITHUB_OUTPUT
 
   comment-result:
     runs-on: ubuntu-latest
@@ -89,6 +98,7 @@ jobs:
           script: |
             const run = context.payload.workflow_run;
             const prs = run.pull_requests || [];
+            console.log(`Referenced PR count: ${prs.length}`);
             if (prs.length === 0) {
               core.info('No pull requests associated with this run.');
               return;
@@ -103,11 +113,16 @@ jobs:
               if (match) {
                 const [, total, passed, failed, skipped, overall] = match;
                 resultSummary = `Total=${total}, Passed=${passed}, Failed=${failed}, Skipped=${skipped} (Result=${overall})`;
+              } else {
+                core.warning('Could not parse test-run node from editmode-results.xml.');
               }
+            } else {
+              core.warning(`Result file not found at ${resultPath}`);
             }
             const body = `<!-- unity-editmode-suite -->\n### Unity EditMode Suite\nStatus: **${status}**\n${resultSummary}\n- Workflow: [View Run](${run.html_url})\n- Artifacts: \`editmode-suite\``;
             for (const pr of prs) {
               const {number} = pr;
+              console.log(`Updating PR #${number}`);
               const comments = await github.paginate(github.rest.issues.listComments, {
                 owner: context.repo.owner,
                 repo: context.repo.repo,
