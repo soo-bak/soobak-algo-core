@@ -1,4 +1,7 @@
 ﻿# Soobak Algorithm Core & Sorting
+[![Unity EditMode Suite](https://github.com/soo-bak/soobak-algo-core/actions/workflows/unity-editmode.yml/badge.svg)](https://github.com/soo-bak/soobak-algo-core/actions/workflows/unity-editmode.yml)
+[![Coverage](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/soo-bak/21437d3f33ae019a0b58a88a2bf90c56/raw/sorting-algo-core-coverage.json)](https://gist.github.com/soo-bak/21437d3f33ae019a0b58a88a2bf90c56)
+
 
 Reusable Unity 6 algorithm pipeline. `com.soobak.algo.core` defines execution primitives, while `com.soobak.algo.sorting` ships a sorting domain showcase.
 

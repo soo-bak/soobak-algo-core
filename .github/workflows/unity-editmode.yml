@@ -1,4 +1,4 @@
-# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+﻿# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
 name: Unity EditMode Suite
 
 on:
@@ -122,6 +122,34 @@ jobs:
             }
           }
         id: summary
+
+      - name: Extract coverage percentage
+        if: always()
+        run: |
+          if [ -f Artifacts/coverage/Report/Summary.xml ]; then
+            percent=$(python - <<'PYCODE'
+import xml.etree.ElementTree as ET
+root = ET.parse('Artifacts/coverage/Report/Summary.xml').getroot()
+node = root.find('.//coverage')
+print(float(node.get('percent')) if node is not None else 0.0)
+PYCODE
+)
+            echo "COVERAGE=$percent" >> $GITHUB_ENV
+          else
+            echo 'Coverage summary not found, defaulting to 0'
+            echo 'COVERAGE=0' >> $GITHUB_ENV
+          fi
+
+      - name: Upload coverage badge
+        if: always()
+        uses: schneegans/dynamic-badges-action@v1.7.0
+        with:
+          auth: ${{ secrets.BADGE_GIST_TOKEN }}
+          gistID: 21437d3f33ae019a0b58a88a2bf90c56
+          filename: sorting-algo-core-coverage.json
+          label: Coverage
+          message: "${{ env.COVERAGE }}%"
+          color: ${{ (env.COVERAGE >= 80 && 'brightgreen') || (env.COVERAGE >= 60 && 'yellow') || 'red' }}
 
       - name: Post PR Comment
         if: ${{ github.event_name == 'pull_request' && steps.summary.outputs.total != '' && github.event.pull_request.head.repo.full_name == github.repository }}
