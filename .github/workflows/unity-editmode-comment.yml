@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ github.event.workflow_run.event == 'pull_request' }}
     outputs:
-      summary-path: ${{ steps.collect.outputs.summary-path }}
+      results-path: ${{ steps.collect.outputs.results-path }}
       status: ${{ steps.collect.outputs.status }}
     steps:
       - name: Download artifact
@@ -32,7 +32,6 @@ jobs:
             });
             const artifact = artifacts.data.artifacts.find(a => a.name === 'editmode-suite');
             if (!artifact) {
-              core.setOutput('summary-path', '');
               core.warning('editmode-suite artifact not found.');
               return;
             }
@@ -42,10 +41,12 @@ jobs:
               artifact_id: artifact.id,
               archive_format: 'zip',
             });
-            const artifactPath = `${process.cwd()}/artifact.zip`;
-            require('fs').writeFileSync(artifactPath, Buffer.from(download.data));
-            core.setOutput('status', context.payload.workflow_run.conclusion);
+            const fs = require('fs');
+            const path = require('path');
+            const artifactPath = path.join(process.cwd(), 'artifact.zip');
+            fs.writeFileSync(artifactPath, Buffer.from(download.data));
             core.setOutput('zip-path', artifactPath);
+            core.setOutput('status', context.payload.workflow_run.conclusion);
 
       - name: Unzip artifact
         if: ${{ steps.download.outputs.zip-path }}
@@ -53,27 +54,33 @@ jobs:
         with:
           args: unzip -qq "${{ steps.download.outputs.zip-path }}" -d artifact
 
-      - name: Locate coverage summary
+      - name: Locate test results
         id: collect
         run: |
-          if [ ! -d artifact ]; then
-            echo "::warning::Artifact directory not found."
-            echo "summary-path=" >> $GITHUB_OUTPUT
+          if [ -z "${{ steps.download.outputs.zip-path }}" ]; then
+            echo "results-path=" >> $GITHUB_OUTPUT
+            echo "status=${{ steps.download.outputs.status }}" >> $GITHUB_OUTPUT
             exit 0
           fi
-          summary=$(find artifact -name Summary.xml | head -n 1)
-          if [ -z "$summary" ]; then
-            echo "::warning::Summary.xml not found within artifact."
-            echo "summary-path=" >> $GITHUB_OUTPUT
+          if [ ! -d artifact ]; then
+            echo "::warning::Artifact directory not found." >&2
+            echo "results-path=" >> $GITHUB_OUTPUT
+            echo "status=${{ steps.download.outputs.status }}" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          results=$(find artifact -name editmode-results.xml | head -n 1)
+          if [ -z "$results" ]; then
+            echo "::warning::editmode-results.xml not found." >&2
+            echo "results-path=" >> $GITHUB_OUTPUT
           else
-            echo "summary-path=$summary" >> $GITHUB_OUTPUT
+            echo "results-path=$results" >> $GITHUB_OUTPUT
           fi
           echo "status=${{ steps.download.outputs.status }}" >> $GITHUB_OUTPUT
 
   comment-result:
     runs-on: ubuntu-latest
     needs: download-artifacts
-    if: ${{ needs.download-artifacts.outputs.summary-path != '' }}
+    if: ${{ needs.download-artifacts.outputs.results-path != '' }}
     steps:
       - name: Post summary to PR
         uses: actions/github-script@v7
@@ -87,17 +94,18 @@ jobs:
               return;
             }
             const status = '${{ needs.download-artifacts.outputs.status }}' === 'success' ? 'PASS' : 'FAIL';
-            const summaryPath = '${{ needs.download-artifacts.outputs.summary-path }}';
+            const resultPath = '${{ needs.download-artifacts.outputs.results-path }}';
             const fs = require('fs');
-            let coverageLine = '*Summary not available*';
-            if (fs.existsSync(summaryPath)) {
-              const xml = fs.readFileSync(summaryPath, 'utf8');
-              const match = xml.match(/linecoverage="([0-9.]+)"/i);
+            let resultSummary = '*Results not available*';
+            if (resultPath && fs.existsSync(resultPath)) {
+              const xml = fs.readFileSync(resultPath, 'utf8');
+              const match = xml.match(/<test-run[^>]*total="(\d+)"[^>]*passed="(\d+)"[^>]*failed="(\d+)"[^>]*skipped="(\d+)"[^>]*result="([^"]+)"/);
               if (match) {
-                coverageLine = `${parseFloat(match[1]).toFixed(2)}%`;
+                const [, total, passed, failed, skipped, overall] = match;
+                resultSummary = `Total=${total}, Passed=${passed}, Failed=${failed}, Skipped=${skipped} (Result=${overall})`;
               }
             }
-            const body = `<!-- unity-editmode-suite -->\n### Unity EditMode Suite\nStatus: **${status}**\nLine coverage: ${coverageLine}\n- Workflow: [View Run](${run.html_url})\n- Artifacts: \`editmode-suite\``;
+            const body = `<!-- unity-editmode-suite -->\n### Unity EditMode Suite\nStatus: **${status}**\n${resultSummary}\n- Workflow: [View Run](${run.html_url})\n- Artifacts: \`editmode-suite\``;
             for (const pr of prs) {
               const {number} = pr;
               const comments = await github.paginate(github.rest.issues.listComments, {

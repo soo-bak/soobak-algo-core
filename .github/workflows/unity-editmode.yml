@@ -78,7 +78,7 @@ jobs:
           name: editmode-suite
           path: Artifacts
 
-      - name: Inspect Coverage Outputs
+      - name: Inspect Artifacts
         if: always()
         shell: pwsh
         run: |
@@ -88,26 +88,26 @@ jobs:
             Write-Warning 'Artifacts directory not found.'
           }
 
-      - name: Surface Coverage Summary
+      - name: Surface Test Results
         if: always()
         shell: pwsh
         run: |
-          $summaryFile = Get-ChildItem -Path Artifacts -Recurse -Filter Summary.xml -ErrorAction SilentlyContinue | Select-Object -First 1
-          if ($summaryFile) {
-            [xml]$summary = Get-Content $summaryFile.FullName
-            $attributes = $summary.Summary.Attributes
-            $coverageAttr = $attributes.GetNamedItem('lineCoverage')
-            if (-not $coverageAttr) {
-              $coverageAttr = $attributes.GetNamedItem('linecoverage')
-            }
-            if ($coverageAttr) {
-              $coverage = [math]::Round([double]$coverageAttr.Value, 2)
-              Write-Host "::notice::Line coverage: $coverage%"
+          $resultFile = Get-ChildItem -Path Artifacts -Recurse -Filter editmode-results.xml -ErrorAction SilentlyContinue | Select-Object -First 1
+          if ($resultFile) {
+            [xml]$report = Get-Content $resultFile.FullName
+            $node = $report.'test-run'
+            if ($node) {
+              $attrs = $node.Attributes
+              $total = $attrs['total'].Value
+              $passed = $attrs['passed'].Value
+              $failed = $attrs['failed'].Value
+              $skipped = $attrs['skipped'].Value
+              Write-Host "::notice::Tests Total=$total Passed=$passed Failed=$failed Skipped=$skipped"
             } else {
-              Write-Warning 'Coverage summary present but lineCoverage attribute missing.'
+              Write-Host "::notice::editmode-results.xml located at $($resultFile.FullName)"
             }
           } else {
-            Write-Warning 'Coverage summary not generated.'
+            Write-Warning 'editmode-results.xml not generated.'
           }
 
       - name: Fail on Test Failure
