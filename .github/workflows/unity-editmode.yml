@@ -100,30 +100,6 @@ jobs:
             Write-Warning 'Coverage summary not generated.'
           }
 
-      - name: Report Test Summary
-        if: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository }}
-        env:
-          RUN_STATUS: ${{ steps.run-tests.outcome }}
-          WORKFLOW_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const status = process.env.RUN_STATUS === 'success' ? 'PASS' : 'FAIL';
-            const body = `<!-- unity-editmode-suite -->\n### Unity EditMode Suite\nStatus: **${status}**\n- Workflow: [View Run](${process.env.WORKFLOW_URL})\n- Artifacts: \`editmode-suite\``;
-            try {
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: context.payload.pull_request.number,
-                body,
-              });
-            } catch (error) {
-              if (error.status === 403) {
-                core.warning(`Unable to post PR comment due to permissions: ${error.message}`);
-              } else {
-                throw error;
-              }
-            }
       - name: Fail on Test Failure
         if: ${{ steps.run-tests.outcome == 'failure' }}
         run: |
