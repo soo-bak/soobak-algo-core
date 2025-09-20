@@ -1,0 +1,21 @@
+{
+  "name": "com.soobak.algo.search",
+  "displayName": "Soobak Algorithm Search",
+  "description": "Search-specific implementations built on top of Soobak Algorithm Core.",
+  "version": "0.1.0",
+  "unity": "6000.0",
+  "author": {
+    "name": "Soobak",
+    "email": "contact@soobak.dev"
+  },
+  "keywords": [
+    "search",
+    "algorithm",
+    "visualization"
+  ],
+  "dependencies": {
+    "com.soobak.algo.core": "0.1.0",
+    "com.cysharp.unitask": "https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask#2.5.3"
+  },
+  "samples": []
+}

@@ -106,9 +106,9 @@ InitTestScene*.unity*
 /[Pp]ackages/[Pp]ackageCache/
 /[Pp]ackages/[Pp]ackageManager/
 
-# Unity Package development temporary files
-/[Pp]rojectSettings/
-/[Aa]ssets/
+# Unity Package development temporary files (keep minimal config for testing)
+# /[Pp]rojectSettings/
+# /[Aa]ssets/
 /[Ll]ibrary/
 /[Tt]emp/
 /[Oo]bj/
