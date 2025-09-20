@@ -1,0 +1,17 @@
+{
+  "name": "Soobak.Algo.Search",
+  "rootNamespace": "Soobak.Algo.Search",
+  "references": [
+    "Soobak.Algo.Core",
+    "UniTask"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}
