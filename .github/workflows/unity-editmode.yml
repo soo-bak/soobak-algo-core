@@ -9,6 +9,7 @@ permissions:
   contents: read
   checks: write
   issues: write
+  pull-requests: write
   statuses: write
 
 concurrency:
@@ -69,7 +70,7 @@ jobs:
           artifactsPath: Artifacts
           coverageOptions: generateAdditionalMetrics;generateHtmlReport;generateBadgeReport
           customImage: unityci/editor:ubuntu-6000.2.5f1-webgl-3.1
-          customParameters: -enableCodeCoverage -coverageResultsPath Artifacts/coverage -coverageHistoryPath Artifacts/coverage-history
+          customParameters: -enableCodeCoverage -coverageResultsPath Artifacts/coverage -coverageHistoryPath Artifacts/coverage-history -assemblyFilters +Soobak.Algo.*
 
       - name: Publish Artifacts
         if: always()
@@ -78,27 +79,90 @@ jobs:
           name: editmode-suite
           path: Artifacts
 
-      - name: Surface Coverage Summary
+      - name: Surface Test Results
+        id: summarize
         if: always()
         shell: pwsh
         run: |
-          $summaryPath = Join-Path Artifacts "coverage/Report/Summary.xml"
-          if (Test-Path $summaryPath) {
-            [xml]$summary = Get-Content $summaryPath
-            $attributes = $summary.Summary.Attributes
-            $coverageAttr = $attributes.GetNamedItem('lineCoverage')
-            if (-not $coverageAttr) {
-              $coverageAttr = $attributes.GetNamedItem('linecoverage')
-            }
-            if ($coverageAttr) {
-              $coverage = [math]::Round([double]$coverageAttr.Value, 2)
-              Write-Host "::notice::Line coverage: $coverage%"
+          $resultFile = Get-ChildItem -Path Artifacts -Recurse -Filter editmode-results.xml -ErrorAction SilentlyContinue | Select-Object -First 1
+          if ($resultFile) {
+            [xml]$report = Get-Content $resultFile.FullName
+            $node = $report.'test-run'
+            if ($node) {
+              $attrs = $node.Attributes
+              $total = $attrs['total'].Value
+              $passed = $attrs['passed'].Value
+              $failed = $attrs['failed'].Value
+              $skipped = $attrs['skipped'].Value
+              $result = $attrs['result'].Value
+              Write-Host "::notice::Tests Total=$total Passed=$passed Failed=$failed Skipped=$skipped Result=$result"
+              "total=$total" | Out-File -FilePath summary.env -Encoding utf8
+              "passed=$passed" | Out-File -FilePath summary.env -Encoding utf8 -Append
+              "failed=$failed" | Out-File -FilePath summary.env -Encoding utf8 -Append
+              "skipped=$skipped" | Out-File -FilePath summary.env -Encoding utf8 -Append
+              "overall=$result" | Out-File -FilePath summary.env -Encoding utf8 -Append
             } else {
-              Write-Warning 'Coverage summary present but lineCoverage attribute missing.'
+              Write-Host "::notice::editmode-results.xml located at $($resultFile.FullName)"
             }
           } else {
-            Write-Warning 'Coverage summary not generated.'
+            Write-Warning 'editmode-results.xml not generated.'
           }
+        env:
+          ACTIONS_STEP_DEBUG: ${{ runner.debug }}
+
+      - name: Load summary
+        if: always() && ${{ hashFiles('summary.env') != '' }}
+        shell: pwsh
+        run: |
+          Get-Content summary.env | ForEach-Object {
+            if ($_ -match '^(.*?)=(.*)$') {
+              $name = $matches[1]
+              $value = $matches[2]
+              echo "$name=$value" >> $env:GITHUB_OUTPUT
+            }
+          }
+        id: summary
+
+      - name: Post PR Comment
+        if: ${{ github.event_name == 'pull_request' && steps.summary.outputs.total != '' && github.event.pull_request.head.repo.full_name == github.repository }}
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const {total, passed, failed, skipped, overall} = {
+              total: '${{ steps.summary.outputs.total }}',
+              passed: '${{ steps.summary.outputs.passed }}',
+              failed: '${{ steps.summary.outputs.failed }}',
+              skipped: '${{ steps.summary.outputs.skipped }}',
+              overall: '${{ steps.summary.outputs.overall }}',
+            };
+            const body = `<!-- unity-editmode-suite -->\n### Unity EditMode Suite\nStatus: **${overall}**\nTotal=${total}, Passed=${passed}, Failed=${failed}, Skipped=${skipped}\n- Workflow: [View Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})\n- Artifacts: \`editmode-suite\``;
+            const prNumber = context.payload.pull_request?.number;
+            if (!prNumber) {
+              core.warning('No PR number available to comment.');
+              return;
+            }
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+            }, response => response.data);
+            const existing = comments.find(comment => comment.body && comment.body.includes('<!-- unity-editmode-suite -->'));
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body,
+              });
+            }
 
       - name: Fail on Test Failure
         if: ${{ steps.run-tests.outcome == 'failure' }}
