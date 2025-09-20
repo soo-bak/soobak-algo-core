@@ -21,6 +21,18 @@ namespace Soobak.Algo.Sorting {
 
     static IEnumerable<IAlgorithmDescriptor<SortingState, SortOp>> CreateDefaultDescriptors() {
       yield return AlgorithmDescriptor.Create<SortingState, SortOp>(
+        id: "bubble-sort",
+        displayName: "Bubble Sort",
+        description: "Stable bubble sort with early exit when no swaps occur.",
+        factory: () => new BubbleSortAlgorithm(),
+        metadata: new Dictionary<string, string> {
+          { "complexity-average", "O(n^2)" },
+          { "complexity-best", "O(n)" },
+          { "complexity-worst", "O(n^2)" },
+          { "stability", "Stable" }
+        });
+
+      yield return AlgorithmDescriptor.Create<SortingState, SortOp>(
         id: "insertion-sort",
         displayName: "Insertion Sort (Stable)",
         description: "Stable insertion sort that tracks comparisons and insert operations.",

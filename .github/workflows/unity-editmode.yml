@@ -8,6 +8,7 @@ on:
 permissions:
   contents: read
   checks: write
+  issues: write
   statuses: write
 
 concurrency:
@@ -53,6 +54,8 @@ jobs:
             ${{ runner.os }}-unity-${{ env.UNITY_VERSION }}-
 
       - name: Run EditMode Tests
+        id: run-tests
+        continue-on-error: true
         uses: game-ci/unity-test-runner@v4
         env:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
@@ -97,12 +100,8 @@ jobs:
             Write-Warning 'Coverage summary not generated.'
           }
 
-
-
       - name: Fail on Test Failure
         if: ${{ steps.run-tests.outcome == 'failure' }}
         run: |
           echo "Unity EditMode tests failed." >&2
           exit 1
-
-
