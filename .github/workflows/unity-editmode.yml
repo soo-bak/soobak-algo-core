@@ -37,7 +37,7 @@ jobs:
           fetch-depth: 0
 
       - name: Guard license secret
-        if: ${{ secrets.UNITY_LICENSE == '' }}
+        if: ${{ env.UNITY_LICENSE == '' }}
         run: |
           echo "::error::UNITY_LICENSE secret is required for EditMode automation." >&2
           exit 1
