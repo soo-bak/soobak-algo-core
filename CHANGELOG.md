@@ -6,6 +6,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ## [Unreleased]
 ### Added
-- Initial algorithm core with step broadcasting and sorting domain extensions.
-- Stable insertion sort implementation with EditMode test coverage.
-- Unity 6 EditMode CI pipeline powered by `game-ci/unity-test-runner`.
+- Algorithm pipeline contracts (`IAlgorithmDescriptor`, `IAlgorithmCatalog`, `AlgorithmPipeline`) for reusable execution flows.
+- Sorting algorithm catalog with descriptor metadata and EditMode coverage for pipeline execution.
+- Architecture documentation and README updates describing layering and execution flow.
+
+### Changed
+- SortingRunner now supports descriptor-driven execution via `ExecuteAsync(string, ...)` when a catalog is provided.
+
