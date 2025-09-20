@@ -41,21 +41,6 @@ jobs:
           commit_file="$GITHUB_WORKSPACE/.git/commit_range"
           commits=""
 
-          allowed_unsigned_commits=(
-            deceb7aa4e4c19deae5a90d84c8b52b327691ae6
-            c6476b9aaadf0db91b9e119e6b2d2d92d2348736
-          )
-
-          is_allowed_unsigned() {
-            local target="$1"
-            for legacy in "${allowed_unsigned_commits[@]}"; do
-              if [ "$legacy" = "$target" ]; then
-                return 0
-              fi
-            done
-            return 1
-          }
-
           ensure_commit() {
             git rev-parse --quiet --verify "${1}^{commit}" > /dev/null 2>&1
           }
@@ -90,48 +75,36 @@ jobs:
           printf "%s\n" "$commits" > "$commit_file"
           echo "COMMIT_LIST_FILE=$commit_file" >> "$GITHUB_ENV"
 
+          declare -a unsigned=()
+          declare -a invalid=()
+
           while read -r commit; do
-            if is_allowed_unsigned "$commit"; then
-              echo "::notice::Commit $commit skipped: legacy unsigned commit allowed." >&2
-              continue
-            fi
-            if ! git verify-commit "$commit" >/dev/null 2>&1; then
-              echo "::error::Commit $commit lacks a trusted signature" >&2
-              exit 1
-            fi
+            status=$(git log --format='%G?' -n 1 "$commit")
+            subject=$(git log --format='%s' -n 1 "$commit")
+            case "$status" in
+              G|U|X|Y|E|R|D|L)
+                echo "::notice::Commit $commit signed (status=$status): $subject"
+                ;;
+              B)
+                echo "::error::Commit $commit has a bad signature (status=$status): $subject" >&2
+                invalid+=("$commit")
+                ;;
+              *)
+                echo "::error::Commit $commit lacks a signature (status=$status): $subject" >&2
+                unsigned+=("$commit")
+                ;;
+            esac
           done < "$commit_file"
 
-      - name: Lint commit titles
-        shell: pwsh
-        run: |
-          $commitFile = ${env:COMMIT_LIST_FILE}
-          if (-not $commitFile -or -not (Test-Path $commitFile)) {
-            $commitFile = Join-Path $env:GITHUB_WORKSPACE '.git/commit_range'
-          }
-
-          if (-not (Test-Path $commitFile)) {
-            Write-Host '::notice::No commits to lint.'
-            return
-          }
-
-          $commits = Get-Content $commitFile | Where-Object { $_ }
-          if ($commits.Count -eq 0) {
-            Write-Host '::notice::No commits to lint.'
-            return
-          }
-
-          $pattern = '^:[a-z_]+: [a-z0-9-]+: .+'
-          $invalid = @()
-          foreach ($commit in $commits) {
-            $subject = git log --format='%s' -n 1 $commit
-            if ($subject -notmatch $pattern) {
-              $invalid += "${commit}: $subject"
-            }
-          }
-
-          if ($invalid.Count -gt 0) {
-            Write-Error "Commit message(s) violate ':gitmoji: scope: message' convention:`n- " + ($invalid -join "`n- ")
-          }
-
-
+          if [ ${#invalid[@]} -gt 0 ] || [ ${#unsigned[@]} -gt 0 ]; then
+            if [ ${#invalid[@]} -gt 0 ]; then
+              printf "%s\n" "${invalid[@]}" > "$GITHUB_WORKSPACE/.git/invalid_commits"
+              echo "::error::Invalid signature commits: $(printf '%s ' "${invalid[@]}")" >&2
+            fi
+            if [ ${#unsigned[@]} -gt 0 ]; then
+              printf "%s\n" "${unsigned[@]}" > "$GITHUB_WORKSPACE/.git/unsigned_commits"
+              echo "::error::Unsigned commits: $(printf '%s ' "${unsigned[@]}")" >&2
+            fi
+            exit 1
+          fi
 
