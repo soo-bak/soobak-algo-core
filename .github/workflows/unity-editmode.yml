@@ -21,11 +21,16 @@ env:
   UNITY_VERSION: 6000.2.5f1
   PROJECT_PATH: .
   TEST_PLATFORM: EditMode
+  UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+  UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+  UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
 
 jobs:
   editmode:
     env:
       UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+      UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+      UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
     name: EditMode Regression
     runs-on: ubuntu-latest
     timeout-minutes: 40
@@ -52,6 +57,10 @@ jobs:
 
       - name: Run EditMode Tests
         uses: game-ci/unity-test-runner@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
         with:
           githubToken: ${{ secrets.GITHUB_TOKEN }}
           projectPath: ${{ env.PROJECT_PATH }}
@@ -90,3 +99,4 @@ jobs:
           } else {
             Write-Warning 'Coverage summary not generated.'
           }
+
