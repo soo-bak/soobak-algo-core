@@ -66,7 +66,7 @@ jobs:
           artifactsPath: Artifacts
           coverageOptions: generateAdditionalMetrics;generateHtmlReport;generateBadgeReport
           customImage: unityci/editor:ubuntu-6000.2.5f1-webgl-3.1
-          customParameters: -enableCodeCoverage -coverageResultsPath Artifacts/coverage -coverageHistoryPath Artifacts/coverage-history
+          customParameters: -enableCodeCoverage -coverageResultsPath Artifacts/coverage -coverageHistoryPath Artifacts/coverage-history -assemblyFilters +Soobak.Algo.*
 
       - name: Publish Artifacts
         if: always()
@@ -96,4 +96,13 @@ jobs:
           } else {
             Write-Warning 'Coverage summary not generated.'
           }
+
+
+
+      - name: Fail on Test Failure
+        if: ${{ steps.run-tests.outcome == 'failure' }}
+        run: |
+          echo "Unity EditMode tests failed." >&2
+          exit 1
+
 
