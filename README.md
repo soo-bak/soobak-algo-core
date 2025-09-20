@@ -51,6 +51,8 @@ Reusable Unity 6 algorithm pipeline. `com.soobak.algo.core` defines execution pr
 - Import "Sorting Visualizer Demo" from the Package Manager samples to try the cube-based bar visualizer.
 - Attach `SortingDemoController` to an empty GameObject and press Play to run the selected algorithm.
 
+
+![Sorting demo preview](Docs/images/sorting-demo.gif)
 ## Additional Docs
 - See `Docs/architecture.md` for layering responsibilities and extension guidance.
 
