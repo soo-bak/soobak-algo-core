@@ -18,8 +18,12 @@ Reusable Unity 6 algorithm pipeline. `com.soobak.algo.core` defines execution pr
 3. Consumers either pass an `ISortingAlgorithm` directly or call `ExecuteAsync("quick-sort", state, token)`.
 4. Each step broadcasts a cloned `SortingState` and a `SortOp` event so visualizers receive immutable snapshots.
 
-## Usage
-1. Add Git UPM dependencies using path parameters.
+1. Add the complete package from Git URL:
+   ```
+   https://github.com/soo-bak/soobak-algo-core.git
+   ```
+
+2. Or add individual packages using path parameters:
    ```json
    {
      "dependencies": {
