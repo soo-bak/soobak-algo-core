@@ -19,11 +19,12 @@ Reusable Unity 6 algorithm pipeline. `com.soobak.algo.core` defines execution pr
 4. Each step broadcasts a cloned `SortingState` and a `SortOp` event so visualizers receive immutable snapshots.
 
 ## Usage
-1. Install UniTask first (required dependency):
-   - Open Unity Package Manager
-   - Add package from Git URL: `https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask#2.5.3`
+1. Add the complete package from Git URL:
+   ```
+   https://github.com/soo-bak/soobak-algo-core.git
+   ```
 
-2. Add Git UPM dependencies using path parameters. **Important**: Import `com.soobak.algo.core` first, then other packages.
+2. Or add individual packages using path parameters:
    ```json
    {
      "dependencies": {
