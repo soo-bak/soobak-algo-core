@@ -19,7 +19,7 @@ Reusable Unity 6 algorithm pipeline. `com.soobak.algo.core` defines execution pr
 4. Each step broadcasts a cloned `SortingState` and a `SortOp` event so visualizers receive immutable snapshots.
 
 ## Usage
-1. Add Git UPM dependencies using path parameters.
+1. Add Git UPM dependencies using path parameters. **Important**: Import `com.soobak.algo.core` first, then other packages.
    ```json
    {
      "dependencies": {
