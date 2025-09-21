@@ -23,7 +23,8 @@ namespace Soobak.Algo.Sorting {
         }
 
         var buffer = new SortingItem[count];
-        await MergeSortAsync(state, sink, buffer, 0, count - 1, cancellationToken);
+        var sourceIndices = new int[count];
+        await MergeSortAsync(state, sink, buffer, sourceIndices, 0, count - 1, cancellationToken);
         await sink.PublishAsync(new AlgorithmStep<SortingState, SortOp>(state.Clone(), SortOp.Finalize("Merge sort complete")), cancellationToken);
       }
       catch (OperationCanceledException ex) {
@@ -36,19 +37,19 @@ namespace Soobak.Algo.Sorting {
       }
     }
 
-    async UniTask MergeSortAsync(SortingState state, IAlgorithmStepSink<SortingState, SortOp> sink, SortingItem[] buffer, int left, int right, CancellationToken cancellationToken) {
+    async UniTask MergeSortAsync(SortingState state, IAlgorithmStepSink<SortingState, SortOp> sink, SortingItem[] buffer, int[] sourceIndices, int left, int right, CancellationToken cancellationToken) {
       if (left >= right)
         return;
 
       cancellationToken.ThrowIfCancellationRequested();
       var mid = left + (right - left) / 2;
 
-      await MergeSortAsync(state, sink, buffer, left, mid, cancellationToken);
-      await MergeSortAsync(state, sink, buffer, mid + 1, right, cancellationToken);
-      await MergeAsync(state, sink, buffer, left, mid, right, cancellationToken);
+      await MergeSortAsync(state, sink, buffer, sourceIndices, left, mid, cancellationToken);
+      await MergeSortAsync(state, sink, buffer, sourceIndices, mid + 1, right, cancellationToken);
+      await MergeAsync(state, sink, buffer, sourceIndices, left, mid, right, cancellationToken);
     }
 
-    async UniTask MergeAsync(SortingState state, IAlgorithmStepSink<SortingState, SortOp> sink, SortingItem[] buffer, int left, int mid, int right, CancellationToken cancellationToken) {
+    async UniTask MergeAsync(SortingState state, IAlgorithmStepSink<SortingState, SortOp> sink, SortingItem[] buffer, int[] sourceIndices, int left, int mid, int right, CancellationToken cancellationToken) {
       var leftIndex = left;
       var rightIndex = mid + 1;
       var bufferIndex = 0;
@@ -60,28 +61,41 @@ namespace Soobak.Algo.Sorting {
         await sink.PublishAsync(new AlgorithmStep<SortingState, SortOp>(state.Clone(), SortOp.Compare(leftIndex, rightIndex)), cancellationToken);
 
         if (state.Items[leftIndex].Value <= state.Items[rightIndex].Value) {
-          buffer[bufferIndex++] = state.Items[leftIndex++].Clone();
+          var sourceIndex = leftIndex;
+          buffer[bufferIndex] = state.Items[leftIndex].Clone();
+          sourceIndices[bufferIndex++] = sourceIndex;
+          leftIndex++;
         }
         else {
-          buffer[bufferIndex++] = state.Items[rightIndex++].Clone();
+          var sourceIndex = rightIndex;
+          buffer[bufferIndex] = state.Items[rightIndex].Clone();
+          sourceIndices[bufferIndex++] = sourceIndex;
+          rightIndex++;
         }
       }
 
       while (leftIndex <= mid) {
         cancellationToken.ThrowIfCancellationRequested();
-        buffer[bufferIndex++] = state.Items[leftIndex++].Clone();
+        var sourceIndex = leftIndex;
+        buffer[bufferIndex] = state.Items[leftIndex].Clone();
+        sourceIndices[bufferIndex++] = sourceIndex;
+        leftIndex++;
       }
 
       while (rightIndex <= right) {
         cancellationToken.ThrowIfCancellationRequested();
-        buffer[bufferIndex++] = state.Items[rightIndex++].Clone();
+        var sourceIndex = rightIndex;
+        buffer[bufferIndex] = state.Items[rightIndex].Clone();
+        sourceIndices[bufferIndex++] = sourceIndex;
+        rightIndex++;
       }
 
       for (var i = 0; i < bufferIndex; i++) {
         cancellationToken.ThrowIfCancellationRequested();
         var targetIndex = left + i;
         state.Replace(targetIndex, buffer[i].Clone());
-        await sink.PublishAsync(new AlgorithmStep<SortingState, SortOp>(state.Clone(), SortOp.Insert(mid, targetIndex, buffer[i])), cancellationToken);
+        var sourceIndex = sourceIndices[i];
+        await sink.PublishAsync(new AlgorithmStep<SortingState, SortOp>(state.Clone(), SortOp.Insert(sourceIndex, targetIndex, buffer[i])), cancellationToken);
       }
     }
   }
