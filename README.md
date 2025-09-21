@@ -18,12 +18,38 @@ Reusable Unity 6 algorithm pipeline. `com.soobak.algo.core` defines execution pr
 3. Consumers either pass an `ISortingAlgorithm` directly or call `ExecuteAsync("quick-sort", state, token)`.
 4. Each step broadcasts a cloned `SortingState` and a `SortOp` event so visualizers receive immutable snapshots.
 
-1. Add the complete package from Git URL:
+## Installation
+
+1. **Install UniTask first** (required dependency):
+
+   **Git URL (recommended):**
    ```
-   https://github.com/soo-bak/soobak-algo-core.git
+   https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask#2.5.10
    ```
 
-2. Or add individual packages using path parameters:
+   **OpenUPM (alternative):**
+   ```
+   https://openupm.com/packages/com.cysharp.unitask/
+   ```
+
+2. **Add individual packages using path parameters**:
+
+   **Core Package:**
+   ```
+   https://github.com/soo-bak/soobak-algo-core.git?path=Packages/com.soobak.algo.core
+   ```
+
+   **Sorting Package:**
+   ```
+   https://github.com/soo-bak/soobak-algo-core.git?path=Packages/com.soobak.algo.sorting
+   ```
+
+   **Search Package:**
+   ```
+   https://github.com/soo-bak/soobak-algo-core.git?path=Packages/com.soobak.algo.search
+   ```
+
+   **Or add to manifest.json:**
    ```json
    {
      "dependencies": {
@@ -33,6 +59,9 @@ Reusable Unity 6 algorithm pipeline. `com.soobak.algo.core` defines execution pr
      }
    }
    ```
+
+   **Note**: Each package is independent and can be installed separately. Make sure to install UniTask first before using any algorithm packages.
+
 2. Implement a visualizer.
    ```csharp
    public sealed class BarVisualizer : IBarVisualizer {
